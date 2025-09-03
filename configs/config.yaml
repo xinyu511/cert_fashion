@@ -1,0 +1,49 @@
+# configs/config.yaml  (Fashion-MNIST, offline)
+
+hydra:
+  run:
+    dir: outputs/train_cert_offline/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+dataset:
+  name: "FashionMNIST"
+  path: "./data"
+
+offline_data_path: "./data/fashionmnist_certify_gauss_votes.h5"
+
+training:
+  epochs: 20
+  batch_size: 256
+  num_workers: 4
+  devices: 1
+  precision: "16-mixed"
+  loss_type: "l1"   # or "ce"
+  log_every_n_steps: 50
+  deterministic: false
+
+# IMPORTANT: use the real filename you showed on disk
+classifier_ckpt_path: ${hydra:runtime.cwd}/logs/clf/resnet20/fashionmnist/lightning_logs/version_0/checkpoints/saved_epoch=epoch=18.ckpt
+
+pl_model:
+  _target_: utils.pl_module.ImageCertifier
+  _recursive_: false  
+  cert:
+    _target_: utils.cert_model.FuseNet
+    clf_path: ${classifier_ckpt_path}
+    backbone:
+      _target_: torch.hub.load
+      repo_or_dir: chenyaofo/pytorch-cifar-models
+      model: cifar10_resnet20
+      pretrained: false
+
+  optimizer_cfg:
+    _target_: torch.optim.Adam
+    _partial_: true
+    lr: 1e-4
+    weight_decay: 1e-5
+
+  scheduler_cfg:
+    _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    _partial_: true
+    T_max: ${training.epochs}
+
+  loss_type: ${training.loss_type}

@@ -1,0 +1,76 @@
+dataset:
+  name: fashionmnist
+  num_classes: 10
+  train_split: 0.85
+  val_split: 0.15
+
+  train_dataset:
+    _target_: torchvision.datasets.FashionMNIST
+    root: ./data
+    train: true
+    download: true
+    transform:
+      _target_: torchvision.transforms.Compose
+      transforms:
+        # FashionMNIST is 28x28 grayscale. Convert to 32x32, 3ch to match ResNet20.
+        - _target_: torchvision.transforms.Resize
+          size: 32
+          antialias: true
+        - _target_: torchvision.transforms.Grayscale
+          num_output_channels: 3
+        - _target_: torchvision.transforms.RandomCrop
+          size: 32
+          padding: 4
+          padding_mode: reflect
+        - _target_: torchvision.transforms.RandomHorizontalFlip
+        - _target_: torchvision.transforms.ToTensor
+
+  test_dataset:
+    _target_: torchvision.datasets.FashionMNIST
+    root: ./data
+    train: false
+    download: true
+    transform:
+      _target_: torchvision.transforms.Compose
+      transforms:
+        - _target_: torchvision.transforms.Resize
+          size: 32
+          antialias: true
+        - _target_: torchvision.transforms.Grayscale
+          num_output_channels: 3
+        - _target_: torchvision.transforms.ToTensor
+
+classifier: resnet20
+
+model:
+  _target_: torch.hub.load
+  repo_or_dir: chenyaofo/pytorch-cifar-models
+  model: cifar10_resnet20
+  pretrained: false
+
+dataloader:
+  train_batch_size: 64
+  val_batch_size: 512
+  test_batch_size: 512
+
+pl_model:
+  _target_: utils.pl_module.ImageClassifier
+  clf: ${model}
+  num_classes: ${dataset.num_classes}
+  optimizer:
+    _partial_: true
+    _target_: torch.optim.Adam
+    lr: 0.001
+    # weight_decay: 0.0   # uncomment if you want wd
+
+trainer:
+  log_dir: ./logs/clf/${classifier}/${dataset.name}/
+  log_every_n_steps: 10
+  accumulate_grad_batches: 1
+  gradient_clip_val: 5
+  max_epochs: 20
+  gpu: 0                 # or set via CLI/env; your script maps this to the device
+  val_monitor: val_acc
+  val_check_interval: 1.0
+  mode: max
+  deterministic: true

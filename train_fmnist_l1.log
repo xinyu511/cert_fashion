@@ -1,0 +1,70 @@
+nohup: ignoring input
+/scratch/xinyul3/venv/lib64/python3.9/site-packages/networkx/utils/backends.py:135: RuntimeWarning: networkx backend defined more than once: nx-loopback
+  backends.update(_get_backends("networkx.backends"))
+Using cache found in /afs/andrew.cmu.edu/usr3/xinyul3/.cache/torch/hub/chenyaofo_pytorch-cifar-models_master
+Using cache found in /afs/andrew.cmu.edu/usr3/xinyul3/.cache/torch/hub/chenyaofo_pytorch-cifar-models_master
+/scratch/xinyul3/venv/lib64/python3.9/site-packages/pytorch_lightning/utilities/parsing.py:209: Attribute 'cert' is an instance of `nn.Module` and is already saved during checkpointing. It is recommended to ignore them using `self.save_hyperparameters(ignore=['cert'])`.
+
+--- Configuration (resolved) ---
+dataset:
+  name: FashionMNIST
+  path: ./data
+offline_data_path: ./data/fashionmnist_certify_gauss_votes.h5
+training:
+  epochs: 20
+  batch_size: 256
+  num_workers: 4
+  devices: 1
+  precision: 16-mixed
+  loss_type: l1
+  log_every_n_steps: 50
+  deterministic: false
+classifier_ckpt_path: ${hydra:runtime.cwd}/logs/clf/resnet20/fashionmnist/lightning_logs/version_0/checkpoints/saved_epoch=epoch=18.ckpt
+pl_model:
+  _target_: utils.pl_module.ImageCertifier
+  _recursive_: false
+  cert:
+    _target_: utils.cert_model.FuseNet
+    clf_path: ${classifier_ckpt_path}
+    backbone:
+      _target_: torch.hub.load
+      repo_or_dir: chenyaofo/pytorch-cifar-models
+      model: cifar10_resnet20
+      pretrained: false
+  optimizer_cfg:
+    _target_: torch.optim.Adam
+    _partial_: true
+    lr: 0.0001
+    weight_decay: 1.0e-05
+  scheduler_cfg:
+    _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    _partial_: true
+    T_max: ${training.epochs}
+  loss_type: ${training.loss_type}
+
+--------------------------------
+
+=== H5 Summary ===
+Meta: {'created_at': '2025-09-03T04:46:15.928543Z', 'dataset': 'CIFAR10', 'splits': {'train': 55000, 'val': 5000, 'test': 10000}, 'num_classes': 10, 'samples_per_sigma': 1000, 'sigmas': [0.009999999776482582, 0.035789474844932556, 0.06157894805073738, 0.0873684212565422, 0.11315789818763733, 0.13894736766815186, 0.16473683714866638, 0.1905263215303421, 0.21631579101085663, 0.24210526049137115, 0.2678947448730469, 0.2936842143535614, 0.3194736838340759, 0.34526315331459045, 0.371052622795105, 0.3968420922756195, 0.4226315915584564, 0.44842106103897095, 0.4742105305194855, 0.5], 'vote_mode': 'argmax', 'normalize': False, 'note': 'counts = argmax votes over K MC trials; distributions = counts / K'}
+[train] keys=['distributions', 'images', 'labels', 'sigmas']
+  images: (55000, 3, 32, 32) uint8
+  labels: (55000,) int64
+  dists : (55000, 20, 10) float32
+  sigmas: (20,) float32
+[val] keys=['distributions', 'images', 'labels', 'sigmas']
+  images: (5000, 3, 32, 32) uint8
+  labels: (5000,) int64
+  dists : (5000, 20, 10) float32
+  sigmas: (20,) float32
+[test] keys=['distributions', 'images', 'labels', 'sigmas']
+  images: (10000, 3, 32, 32) uint8
+  labels: (10000,) int64
+  dists : (10000, 20, 10) float32
+  sigmas: (20,) float32
+==================
+Error executing job with overrides: []
+Cannot instantiate config of type FuseNet.
+Top level config must be an OmegaConf DictConfig/ListConfig object,
+a plain dict/list, or a Structured Config class or instance.
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

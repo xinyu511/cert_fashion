@@ -1,0 +1,37 @@
+dataset:
+  name: FashionMNIST
+  path: ./data
+offline_data_path: ./data/fashionmnist_certify_gauss_votes.h5
+training:
+  epochs: 20
+  batch_size: 256
+  num_workers: 4
+  devices: 1
+  precision: 16-mixed
+  loss_type: l1
+  log_every_n_steps: 50
+  deterministic: false
+classifier_ckpt_path: ${hydra:runtime.cwd}/logs/clf/resnet20/fashionmnist/lightning_logs/version_0/checkpoints/saved_epoch=18.ckpt
+pl_model:
+  _target_: utils.pl_module.ImageCertifier
+  cert:
+    _target_: utils.cert_model.FuseNet
+    clf_path: ${classifier_ckpt_path}
+    backbone:
+      _target_: torch.hub.load
+      repo_or_dir: /afs/andrew.cmu.edu/usr3/xinyul3/.cache/torch/hub/chenyaofo_pytorch-cifar-models_master
+      model: cifar10_resnet20
+      source: local
+      pretrained: false
+      force_reload: false
+      trust_repo: true
+  optimizer_cfg:
+    _target_: torch.optim.Adam
+    _partial_: true
+    lr: 0.0001
+    weight_decay: 1.0e-05
+  scheduler_cfg:
+    _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    _partial_: true
+    T_max: ${training.epochs}
+  loss_type: ${training.loss_type}
