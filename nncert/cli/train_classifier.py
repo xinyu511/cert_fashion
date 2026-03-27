@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hydra
+from pathlib import Path
 import pytorch_lightning as pl
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
@@ -10,7 +11,7 @@ from nncert.data.vision import build_classifier_dataloaders
 from nncert.utils.reproducibility import setup_reproducibility
 
 
-@hydra.main(config_path="../../configs", config_name="train_classifier", version_base=None)
+@hydra.main(config_path=str(Path(__file__).resolve().parents[2] / "configs"), config_name="train_classifier", version_base=None)
 def main(cfg: DictConfig) -> None:
     print("\n--- Configuration (resolved) ---")
     print(OmegaConf.to_yaml(cfg, resolve=True))

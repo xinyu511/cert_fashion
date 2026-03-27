@@ -4,6 +4,7 @@ import json
 import os
 
 import hydra
+from pathlib import Path
 import torch
 from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import DataLoader
@@ -14,7 +15,7 @@ from nncert.lightning.modules import ImageCertifier
 from nncert.utils.reproducibility import setup_reproducibility
 
 
-@hydra.main(config_path="../../configs", config_name="eval_certifiers", version_base=None)
+@hydra.main(config_path=str(Path(__file__).resolve().parents[2] / "configs"), config_name="eval_certifiers", version_base=None)
 def main(cfg: DictConfig) -> None:
     print("\n--- Configuration (resolved) ---")
     print(OmegaConf.to_yaml(cfg, resolve=True))

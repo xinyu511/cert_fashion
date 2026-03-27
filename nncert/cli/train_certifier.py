@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 import hydra
+from pathlib import Path
 import pytorch_lightning as pl
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
@@ -12,7 +13,7 @@ from nncert.data.h5_votes import H5VotesDataModule, summarize_h5
 from nncert.utils.reproducibility import setup_reproducibility
 
 
-@hydra.main(config_path="../../configs", config_name="train_certifier", version_base=None)
+@hydra.main(config_path=str(Path(__file__).resolve().parents[2] / "configs"), config_name="train_certifier", version_base=None)
 def main(cfg: DictConfig) -> None:
     print("\n--- Configuration (resolved) ---")
     print(OmegaConf.to_yaml(cfg, resolve=True))

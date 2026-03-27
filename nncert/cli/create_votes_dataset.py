@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 import hydra
+from pathlib import Path
 import numpy as np
 import torch
 from omegaconf import DictConfig, OmegaConf
@@ -14,7 +15,7 @@ from nncert.utils.reproducibility import setup_reproducibility
 from nncert.workflows.votes_dataset import VotesDatasetBuildConfig, build_votes_h5
 
 
-@hydra.main(config_path="../../configs", config_name="create_votes_dataset", version_base=None)
+@hydra.main(config_path=str(Path(__file__).resolve().parents[2] / "configs"), config_name="create_votes_dataset", version_base=None)
 def main(cfg: DictConfig) -> None:
     print("\n--- Configuration (resolved) ---")
     print(OmegaConf.to_yaml(cfg, resolve=True))
