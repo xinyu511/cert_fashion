@@ -13,6 +13,26 @@ from nncert.data.h5_votes import H5VotesDataModule, summarize_h5
 from nncert.utils.reproducibility import setup_reproducibility
 
 
+def _test_with_checkpoint(
+    trainer: pl.Trainer,
+    model: pl.LightningModule,
+    datamodule: pl.LightningDataModule,
+    ckpt_path: str | None,
+) -> None:
+    """Run test with robust checkpoint loading across torch/lightning versions."""
+    if not ckpt_path:
+        trainer.test(model, datamodule=datamodule)
+        return
+
+    # PyTorch 2.6+ changed torch.load default to weights_only=True.
+    # For local trusted checkpoints, we explicitly request full load.
+    try:
+        trainer.test(model, datamodule=datamodule, ckpt_path=ckpt_path, weights_only=False)
+    except TypeError:
+        # Older Lightning versions do not expose `weights_only` in Trainer.test.
+        trainer.test(model, datamodule=datamodule, ckpt_path=ckpt_path)
+
+
 @hydra.main(config_path=str(Path(__file__).resolve().parents[2] / "configs"), config_name="train_certifier", version_base=None)
 def main(cfg: DictConfig) -> None:
     print("\n--- Configuration (resolved) ---")
@@ -68,7 +88,7 @@ def main(cfg: DictConfig) -> None:
 
     best = checkpoint.best_model_path if checkpoint.best_model_path else None
     print(f"Training complete! Best checkpoint: {best}")
-    trainer.test(model, datamodule=datamodule, ckpt_path=best or None)
+    _test_with_checkpoint(trainer, model, datamodule, best or None)
 
 
 if __name__ == "__main__":
