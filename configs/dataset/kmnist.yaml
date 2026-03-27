@@ -1,0 +1,6 @@
+name: KMNIST
+path: ./data
+val_size: 5000
+split_seed: 42
+num_classes: 10
+input_shape: [3, 32, 32]

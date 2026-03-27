@@ -1,0 +1,23 @@
+hydra:
+  run:
+    dir: outputs/eval_certifiers/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+reproducibility:
+  seed: 42
+
+h5_path: ./data/fashionmnist_certify_gauss_votes.h5
+split: val
+
+runtime:
+  batch_size: 512
+  num_workers: 4
+  pin_memory: true
+  use_all_sigmas: true
+  apply_norm_if_meta: true
+  device: auto
+
+models:
+  - name: certifier_fusenet
+    ckpt: ./logs/cert/fusenet_resnet20/FashionMNIST/offline/l1/best-epoch=0-val_loss=0.0000.ckpt
+
+output_json_path: null

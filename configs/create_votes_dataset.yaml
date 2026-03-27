@@ -1,0 +1,31 @@
+defaults:
+  - dataset: fashionmnist
+  - _self_
+
+hydra:
+  run:
+    dir: outputs/create_votes_dataset/${dataset.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+reproducibility:
+  seed: 42
+  deterministic: false
+
+classifier_ckpt_path: ${hydra:runtime.cwd}/logs/clf/resnet20/${dataset.name}/lightning_logs/version_0/checkpoints/saved_epoch=epoch=18.ckpt
+output_h5_path: ./data/fashionmnist_certify_gauss_votes.h5
+
+votes:
+  sigma_min: 0.01
+  sigma_max: 0.50
+  num_sigmas: 20
+  samples_per_sigma: 1000
+  mc_chunk: 100
+
+  normalize_inputs: false
+  norm_mean: [0.4914, 0.4822, 0.4465]
+  norm_std: [0.2470, 0.2435, 0.2616]
+
+runtime:
+  batch_size: 128
+  num_workers: 8
+  pin_memory: true
+  device: auto

@@ -1,10 +1,4 @@
-"""Backward-compatibility shim for historical model import paths.
-
-Legacy checkpoints may reference `utils.cert_model.*` in Hydra config.
-Canonical implementations live in `nncert.models.certifier`.
-"""
-
-from nncert.models.certifier import (
+from .certifier import (
     CertNet,
     CertNet_ORIGINAL,
     CertNetOriginal,

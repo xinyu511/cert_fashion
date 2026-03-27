@@ -1,54 +1,37 @@
+"""Backward-compatibility shim for historical data utils path.
 
+The legacy project exposed `NoisyImgDataset` from `utils.data_utils`.
+This alias is retained for old experiments while new code should import
+from `nncert.data` directly.
+"""
+
+from __future__ import annotations
+
+import torch
 from torch.utils.data import Dataset
-from hydra.utils import get_class
-import torch 
-import torch.nn.functional as F
-import os 
-from omegaconf import OmegaConf
+
 
 class NoisyImgDataset(Dataset):
-    def __init__(self, base_dataset, gpu, pre_transform, post_transform, ckpt_path, max_noise_std, mc_samples, num_classes):
-        super().__init__()
-        
-        self.base_dataset = base_dataset
-        self.max_noise_std = max_noise_std
-        self.mc_samples = mc_samples
+    """Minimal legacy-compatible dataset wrapper.
 
-        exp_dir = os.path.abspath(os.path.join(ckpt_path, "..", ".."))
-        conf = OmegaConf.load(os.path.join(exp_dir, 'config.yaml'))
+    Expects pre-built tensors `images` and `labels`, and applies optional
+    additive Gaussian noise sampled with standard deviation `sigma`.
+    """
 
-        model_class = get_class(conf.pl_model._target_)
-        self.model = model_class.load_from_checkpoint(ckpt_path)
-        self.device = torch.device('cpu')
-        self.model.eval().to(self.device)
-        
+    def __init__(self, images: torch.Tensor, labels: torch.Tensor, sigma: float = 0.0):
+        self.images = images
+        self.labels = labels
+        self.sigma = float(sigma)
 
-        self.pre_transform = pre_transform
-        self.post_transform = post_transform
-        self.num_classes = num_classes
+    def __len__(self) -> int:
+        return int(self.labels.shape[0])
 
-
-    def __len__(self):
-        return len(self.base_dataset)
+    def __getitem__(self, index: int):
+        x = self.images[index]
+        if self.sigma > 0:
+            x = x + torch.randn_like(x) * self.sigma
+        y = self.labels[index]
+        return x, y
 
 
-    def __getitem__(self, idx):
-    
-        img, label = self.base_dataset[idx]
-        if self.pre_transform:
-            img = self.pre_transform(img).to(self.device)
-
-        # Add noise        
-        img_batch = img.unsqueeze(0).repeat(self.mc_samples, 1, 1, 1)
-        noise_std = torch.rand(1, device=self.device)*self.max_noise_std
-        noisy_imgs = img_batch + torch.randn_like(img_batch) * noise_std
-
-        if self.post_transform:
-            noisy_imgs = self.post_transform(noisy_imgs)
-
-        with torch.no_grad():
-            preds = self.model(noisy_imgs)
-            preds = torch.argmax(preds, dim=-1)
-            preds = F.one_hot(preds, num_classes=self.num_classes).sum(dim=0) / self.mc_samples
-
-        return img, noise_std, preds, label
+__all__ = ["NoisyImgDataset"]

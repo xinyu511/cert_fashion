@@ -1,0 +1,19 @@
+defaults:
+  - dataset: fashionmnist
+  - model: classifier_resnet20
+  - training: classifier
+  - _self_
+
+hydra:
+  run:
+    dir: outputs/train_classifier/${dataset.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+reproducibility:
+  seed: 42
+  deterministic: false
+
+pl_model: ${model}
+
+checkpoint:
+  dirpath: logs/clf/resnet20/${dataset.name}/lightning_logs/version_0/checkpoints
+  filename: best-{epoch}-val_acc={val_acc:.4f}

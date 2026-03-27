@@ -1,0 +1,19 @@
+_target_: nncert.lightning.modules.ImageCertifier
+_recursive_: false
+
+cert:
+  _target_: nncert.models.certifier.FuseNet
+  clf_path: ${classifier_ckpt_path}
+
+optimizer_cfg:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 1e-4
+  weight_decay: 1e-5
+
+scheduler_cfg:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _partial_: true
+  T_max: ${training.epochs}
+
+loss_type: ${training.loss_type}

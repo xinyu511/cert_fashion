@@ -1,0 +1,26 @@
+defaults:
+  - dataset: fashionmnist
+  - model: certifier_fusenet
+  - training: certifier
+  - _self_
+
+hydra:
+  run:
+    dir: outputs/train_certifier/${dataset.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+reproducibility:
+  seed: 42
+  deterministic: false
+
+# Path to offline HDF5 created by create_certifier_dataset.py
+# (canonical implementation: nncert.cli.create_votes_dataset)
+offline_data_path: ./data/fashionmnist_certify_gauss_votes.h5
+
+# Path to trained classifier checkpoint
+classifier_ckpt_path: ${hydra:runtime.cwd}/logs/clf/resnet20/${dataset.name}/lightning_logs/version_0/checkpoints/saved_epoch=epoch=18.ckpt
+
+pl_model: ${model}
+
+checkpoint:
+  dirpath: logs/cert/fusenet_resnet20/${dataset.name}/offline/${training.loss_type}
+  filename: best-{epoch}-val_loss={val_loss:.4f}

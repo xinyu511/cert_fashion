@@ -1,2 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Experiment artifacts
+outputs/
+lightning_logs/
+logs/
+
+# Data artifacts
 data/*.h5
-data/*.h5
+
+# Local environment
+.venv/
+.env
+.DS_Store
